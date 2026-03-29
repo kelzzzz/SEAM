@@ -1,7 +1,7 @@
 from fabrictestbed_extensions.fablib.fablib import FablibManager as fablib_manager
 import yaml
 
-with open('{{ cookiecutter.template}}/config/topology.yaml', 'r') as f:
+with open('{{ cookiecutter.topology_template}}/config/topology.yaml', 'r') as f:
     topology_cfg = yaml.full_load(f)
 
 class SliceManager:
