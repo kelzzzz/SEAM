@@ -3,5 +3,6 @@
     "project_slug": "{{cookiecutter.project_name.lower().replace(' ', '_')}}",
     "fabric_site": "",
     "project_id": "",
-    "topology_template": ["swr_basic", "L3VPN"]
+    "topology_template": ["swr_basic", "L3VPN"],
+    "jupyter_kernel_name": "python3"
 }
