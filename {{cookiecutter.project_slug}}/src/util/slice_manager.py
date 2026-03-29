@@ -2,12 +2,12 @@ from fabrictestbed_extensions.fablib.fablib import FablibManager as fablib_manag
 import yaml
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 CONFIG_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "config" / "topology.yaml"
 
 with open(CONFIG_PATH, 'r') as f:
     topology_cfg = yaml.full_load(f)
-
+t
 class SliceManager:
     def __init__(self, topology_cfg):
         self.topology_cfg = topology_cfg
