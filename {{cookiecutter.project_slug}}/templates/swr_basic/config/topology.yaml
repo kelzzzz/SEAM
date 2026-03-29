@@ -1,7 +1,7 @@
 topology:
-  site: "{{ cookiecutter.fabric_site}}"
+  site: "{{ cookiecutter.fabric_site }}"
   image: "default_ubuntu_22",
-  slice_name: "{{ cookiecutter.project_name}}_slice",
+  slice_name: "{{ cookiecutter.project_name }}_slice",
   nodes:
     - name: "sender_node"
       count: 1

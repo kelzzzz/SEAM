@@ -1,7 +1,7 @@
 {
     "project_name": "My FABRIC Experiment",
-    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_') }}",
+    "project_slug": "{{cookiecutter.project_name.lower().replace(' ', '_')}} ",
     "fabric_site": "",
     "project_id": "",
-    "template": ["swr_basic"]
+    "topology_template": ["swr_basic", "L3VPN"]
 }
