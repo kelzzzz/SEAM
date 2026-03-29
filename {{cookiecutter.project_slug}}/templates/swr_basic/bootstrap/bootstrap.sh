@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+echo "Starting Node Bootstrap..."
+
+sudo apt-get update -y
+sudo apt-get install -y python3-pip python3-dev libpcap-dev tcpdump
+
+echo "Installing Python dependencies..."
+sudo pip3 install --no-cache-dir \
+    scapy \
+    pandas \
+    numpy \
+    pyyaml \
+    pybinn
+
+# config for scapy
+sudo setcap cap_net_raw,cap_net_admin=eip $(readlink -f $(which python3))
+
+echo "Bootstrap Complete."

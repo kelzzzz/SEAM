@@ -1,0 +1,17 @@
+topology:
+  site: "{{ cookiecutter.fabric_site}}"
+  image: "default_ubuntu_22",
+  slice_name: "{{ cookiecutter.project_name}}_slice",
+  nodes:
+    - name: "sender_node"
+      count: 1
+      cores: 2
+      ram: 8
+    - name: "worker_nodes"
+      count: 3
+      cores: 2
+      ram: 8
+    - name: "receiver_node"
+      count: 1
+      cores: 2
+      ram: 8
