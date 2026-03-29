@@ -7,7 +7,7 @@ CONFIG_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "config" / "to
 
 with open(CONFIG_PATH, 'r') as f:
     topology_cfg = yaml.full_load(f)
-t
+
 class SliceManager:
     def __init__(self, topology_cfg):
         self.topology_cfg = topology_cfg
