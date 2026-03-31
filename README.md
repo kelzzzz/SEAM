@@ -84,12 +84,14 @@ Planned improvements:
 - Node heartbeats
 - Support for additional data sinks
 
-## AI Usage Notice
+## AI Usage & Transparency Notice
 
 SEAM leveraged the free version of Copilot for the following:
-- Proofreading of and suggestions on this README.md
-- Auto-completing function calls/definitions while typing in VS Code
+- Proofreading of this README.md
+- Inferred auto-completion of function call signatures while typing in VS Code
 - Performing web searches on specific errors
+- Bulk renaming of variables
+- Code clean-up suggestions that I selectively applied myself
 
 ## License
 
