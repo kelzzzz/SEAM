@@ -24,16 +24,6 @@ class SliceManager:
         self.subnet_prefix = self.topology_cfg['network'][0]['subnet'].split('/')[0][:-1]
         self.subnet = self.topology_cfg['network'][0]['subnet']
 
-    def create_slice(self):
-        try: 
-            self.fablib.get_slice(name=self.slice_name)
-            print(f"Slice {self.slice_name} already exists. Using existing slice.")
-            self.slice = self.fablib.get_slice(name=self.slice_name)
-            return
-        except Exception as e:
-            self.slice = self.fablib.new_slice(name=self.slice_name)
-            print(f"Created slice: {self.slice_name}")
-
     def add_nodes(self):
         #TODO Add switch case to accomodate other network types (not just L2Bridge)
         net = self.slice.add_l2network(
@@ -59,12 +49,12 @@ class SliceManager:
 
     def collect_nodes(self):
         if(not self.slice):
-            self.create_slice()
+            self.deploy()
         self.nodes = self.slice.get_nodes()
         
     def _ensure_slice_and_nodes(self):
         if not self.slice:
-            self.create_slice()
+            self.deploy()
         if not self.nodes:
             self.collect_nodes()
         
@@ -108,9 +98,19 @@ class SliceManager:
                 ips.append(ip)
         return ips
     
+
+    def get_all_ips_list(self):
+        self._ensure_slice_and_nodes()
+            
+        ips = []
+        for i, node in enumerate(self.nodes):
+            ips.append(self.subnet_prefix + str(i+1))
+        return ips
+    
+    
     def run_subnet_ping_test(self):
         self._ensure_slice_and_nodes()
-        worker_ips = self.get_worker_ips()
+        worker_ips = self.get_all_ips_list()
         results = []
         print("Running ping test... please wait...")
         try:
@@ -155,19 +155,33 @@ class SliceManager:
             node.upload_file(local_file_path=str(BOOTSTRAP_PATH), remote_file_path=f"/home/{node.get_username()}/bootstrap.sh")
         print("Files uploaded.")
 
-    def run_on_nodes(self):
+    def bootstrap_nodes(self):
+        #TODO The bootstrap process is really slow and should be executed on threads soon
+        for i, node in enumerate(self.nodes):
+            if("worker" in node.get_name()):
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python3 src/worker_consume.py {recv_ip}'], quiet=True)
+                
+        for i, node in enumerate(self.nodes):
+            if("sender" in node.get_name()):
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python3 src/sender_emit.py {self.get_worker_ips()}'], quiet=True)
+                
+            if("receiver" in node.get_name()):
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python3 src/receiver_recv.py'], quiet=True)
+    
+    def run_send_work_recv_code(self):
         recv_ip = self.get_ips()['recv']
         
         for i, node in enumerate(self.nodes):
             if("worker" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python src/worker_consume.py {recv_ip}'], quiet=True)
+                self.execute_commands(node, [f'python3 src/worker_consume.py  {recv_ip} > worker.log 2>&1 &'], quiet=False)
                 
         for i, node in enumerate(self.nodes):
-            if("sender" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python src/sender_emit.py {self.get_worker_ips()}'], quiet=True)
-                
             if("receiver" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python src/receiver_recv.py'], quiet=True)
+                self.execute_commands(node, [f'python3 src/receiver_recv.py > recv.log 2>&1 &'], quiet=False)
+                
+        for i, node in enumerate(self.nodes):
+             if("sender" in node.get_name()):
+                self.execute_commands(node, [f'sudo python3 src/sender_emit.py "{self.get_worker_ips()}" > sender.log 2>&1 & '], quiet=False)
     
     def stop_on_nodes(self):
         for i, node in enumerate(self.nodes):
@@ -175,20 +189,31 @@ class SliceManager:
             
     def deploy(self):
         print("Creating slice...")
-        self.create_slice()
-        print("Adding nodes and network components...")
-        self.add_nodes()
-        print("Deploying slice...")
-        self.slice.submit()
+        try: 
+            self.fablib.get_slice(name=self.slice_name)
+            print(f"Slice {self.slice_name} already exists. Using existing slice.")
+            self.slice = self.fablib.get_slice(name=self.slice_name)
+            return
+        except Exception as e:
+            self.slice = self.fablib.new_slice(name=self.slice_name)
+            print(f"Created slice: {self.slice_name}")
+            print("Adding nodes and network components...")
+            self.add_nodes()
+            print("Deploying slice...")
+            self.slice.submit()
 
-    def run(self):
+    def setup_nodes(self):
         print("Waiting for slice to be active...")
         self.slice.wait_ssh()
         print("Setting subnet IPs...")
         self.set_subnet_ips()
         print("Uploading source files...")
         self.upload_src_files_to_nodes()
+        print("Executing workload on nodes...")
+        self.bootstrap_nodes()
+        
+    def run(self):
         print("Running ping test to validate connectivity...")
         self.run_subnet_ping_test()
-        print("Executing workload on nodes...")
-        self.run_on_nodes()
+        print("Running experiment...")
+        self.run_send_work_recv_code()

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export DEBIAN_FRONTEND=noninteractive
 set -e
 
 echo "Starting Node Bootstrap..."
