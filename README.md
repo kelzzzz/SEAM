@@ -95,4 +95,4 @@ SEAM leveraged the free version of Copilot for the following:
 
 ## License
 
-SEAM is licenced under the MIT license.
+SEAM is licensed under the MIT license.
