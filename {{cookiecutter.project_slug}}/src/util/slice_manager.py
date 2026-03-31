@@ -154,19 +154,19 @@ class SliceManager:
             node.upload_directory(local_directory_path=str(SRC_DIR), remote_directory_path=f"/home/{node.get_username()}")
             node.upload_file(local_file_path=str(BOOTSTRAP_PATH), remote_file_path=f"/home/{node.get_username()}/bootstrap.sh")
         print("Files uploaded.")
-
+        
     def bootstrap_nodes(self):
         #TODO The bootstrap process is really slow and should be executed on threads soon
         for i, node in enumerate(self.nodes):
             if("worker" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python3 src/worker_consume.py {recv_ip}'], quiet=True)
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
                 
         for i, node in enumerate(self.nodes):
             if("sender" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python3 src/sender_emit.py {self.get_worker_ips()}'], quiet=True)
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
                 
             if("receiver" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python3 src/receiver_recv.py'], quiet=True)
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
     
     def run_send_work_recv_code(self):
         recv_ip = self.get_ips()['recv']
