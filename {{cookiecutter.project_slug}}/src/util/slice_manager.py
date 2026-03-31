@@ -6,52 +6,75 @@ import ipaddress
 import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+SRC_DIR = Path(__file__).resolve().parent.parent
 CONFIG_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "config" / "topology.yaml"
+BOOTSTRAP_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "bootstrap" / "bootstrap.sh"
 
-with open(CONFIG_PATH, 'r') as f:
-    topology_cfg = yaml.full_load(f)
-
-COMPONENT_PREFIX = "{{ cookiecutter.project_slug }}"
-SUBNET_PREFIX = topology_cfg['network'][0]['subnet'].split('/')[0][:-1]
-SUBNET = topology_cfg['network'][0]['subnet']
-SLICE_NAME = topology_cfg['slice_name']
-NODES = []
 
 class SliceManager:
-    def __init__(self, topology_cfg):
-        self.topology_cfg = topology_cfg
+
+    def __init__(self, fablib_manager):
+        with open(CONFIG_PATH, 'r') as f:
+            self.topology_cfg = yaml.full_load(f)
+        self.fablib = fablib_manager
+        self.nodes = []
         self.slice = None
+        self.slice_name = self.topology_cfg['slice_name']
+        self.component_prefix = "my_seam_network_test"
+        self.subnet_prefix = self.topology_cfg['network'][0]['subnet'].split('/')[0][:-1]
+        self.subnet = self.topology_cfg['network'][0]['subnet']
 
-    def create_slice(self, fablib_manager):
-        if fablib_manager.get_slice(name=SLICE_NAME):
-            print(f"Slice {SLICE_NAME} already exists. Using existing slice.")
-            self.slice = fablib_manager.get_slice(name=SLICE_NAME)
+    def create_slice(self):
+        try: 
+            self.fablib.get_slice(name=self.slice_name)
+            print(f"Slice {self.slice_name} already exists. Using existing slice.")
+            self.slice = self.fablib.get_slice(name=self.slice_name)
             return
-        self.slice = fablib_manager.new_slice(name=SLICE_NAME)
-        print(f"Created slice: {SLICE_NAME}")
+        except Exception as e:
+            self.slice = self.fablib.new_slice(name=self.slice_name)
+            print(f"Created slice: {self.slice_name}")
 
-    def add_nodes(self, fablib_manager):
+    def add_nodes(self):
         #TODO Add switch case to accomodate other network types (not just L2Bridge)
-        net = self.slice.add_l2network(name=f"l2net_{COMPONENT_PREFIX}", subnet=SUBNET)
+        net = self.slice.add_l2network(
+            name=f"l2net_{self.component_prefix}",
+            subnet=self.subnet
+        )
         
         for node in self.topology_cfg['nodes']:
             for i in range(node['count']):
-                NODES.append(
-                    self.slice.add_node(name=f"{node['name']}_{i}", site=self.topology_cfg['site'], cores=node['cores'], ram=node['ram'])
+                n = self.slice.add_node(
+                    name=f"{node['name']}_{i}",
+                    image=self.topology_cfg['image'],
+                    site=self.topology_cfg['site'],
+                    cores=node['cores'],
+                    ram=node['ram']
                 )
-                n_iface = NODES[i].add_component(
-                    model = self.topology_cfg['network'][0]['NIC_model'], name = f"{node['name']}_nic"
-                    ).get_interfaces()[0]
+                self.nodes.append(n)
+                n_iface = n.add_component(
+                    model=self.topology_cfg['network'][0]['NIC_model'],
+                    name=f"{node['name']}_nic"
+                ).get_interfaces()[0]
                 n_iface.set_network(net)
-                
+
+    def collect_nodes(self):
+        if(not self.slice):
+            self.create_slice()
+        self.nodes = self.slice.get_nodes()
+        
+    def _ensure_slice_and_nodes(self):
+        if not self.slice:
+            self.create_slice()
+        if not self.nodes:
+            self.collect_nodes()
+        
     def set_subnet_ips(self):
-        for i, n in enumerate(NODES):
-            node = slice.get_node(name=n['name'])
+        for i, node in enumerate(self.nodes):
             iface = node.get_interfaces()[0]
             iface.ip_link_up()
             
-            target_ip = SUBNET_PREFIX + str(i+2)
-            target_subnet = ipaddress.IPv4Network(SUBNET)
+            target_ip = self.subnet_prefix + str(i+1)
+            target_subnet = ipaddress.IPv4Network(self.subnet)
             
             print(f"Configuring {node.get_name()} on {iface.get_device_name()} with {target_ip}...")
             
@@ -59,13 +82,39 @@ class SliceManager:
             
             stdout, stderr = node.execute(f"ip addr show {iface.get_device_name()}")
             print(f"Validation: {stdout}")
-            
-    def run_subnet_ping_test(self):
-        worker_ips = [SUBNET_PREFIX + str(i+2) for i in range(3,13)]
-        results = []
+        print("Subnet configuration complete.")
 
+    def get_ips(self):
+        self._ensure_slice_and_nodes()
+        ip_dict = {}
+        for i, node in enumerate(self.nodes):
+            ip = self.subnet_prefix + str(i+1)
+            node_name = node.get_name()
+            if "receiver" in node_name:
+                ip_dict['recv'] = ip
+            elif "sender" in node_name:
+                ip_dict['sndr'] = ip
+            elif "worker" in node_name:
+                ip_dict[f'w{i}'] = ip
+        return ip_dict
+
+    def get_worker_ips(self):
+        self._ensure_slice_and_nodes()
+            
+        ips = []
+        for i, node in enumerate(self.nodes):
+            ip = self.subnet_prefix + str(i+1)
+            if("worker" in node.get_name()):
+                ips.append(ip)
+        return ips
+    
+    def run_subnet_ping_test(self):
+        self._ensure_slice_and_nodes()
+        worker_ips = self.get_worker_ips()
+        results = []
+        print("Running ping test... please wait...")
         try:
-            sender_node = slice.get_node(name=topology_cfg['nodes'][0]['name'] + "_0")
+            sender_node = self.slice.get_node(name=self.topology_cfg['nodes'][0]['name'] + "_0")
             
             for ip in worker_ips:
                 stdout, stderr = sender_node.execute(f"ping -c 3 -W 2 {ip}", quiet=True)
@@ -81,17 +130,65 @@ class SliceManager:
 
         except Exception as e:
             print(f"Error during ping test {e}")
+
+    def execute_single_node(self, node, commands, quiet):
+        for command in commands:
+            print(f'\tExecuting "{command}" on node {node.get_name()}')
+            stdout, stderr = node.execute(command, quiet=quiet, output_file=f"{node.get_name()}.log")
+            if stderr:
+                print(f'Error encountered with "{command}": {stderr}')
+        
+    def execute_commands(self, node, commands, quiet):
+        self._ensure_slice_and_nodes()
+        if isinstance(node, list):
+            for n in node:
+                self.execute_single_node(n, commands, quiet=quiet)
+        else:
+            self.execute_single_node(node, commands, quiet)
+
+    def upload_src_files_to_nodes(self):
+        self._ensure_slice_and_nodes()
+        print(str(SRC_DIR))
+        print(str(BOOTSTRAP_PATH))
+        for i, node in enumerate(self.nodes):
+            node.upload_directory(local_directory_path=str(SRC_DIR), remote_directory_path=f"/home/{node.get_username()}")
+            node.upload_file(local_file_path=str(BOOTSTRAP_PATH), remote_file_path=f"/home/{node.get_username()}/bootstrap.sh")
+        print("Files uploaded.")
+
+    def run_on_nodes(self):
+        recv_ip = self.get_ips()['recv']
+        
+        for i, node in enumerate(self.nodes):
+            if("worker" in node.get_name()):
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python src/worker_consume.py {recv_ip}'], quiet=True)
+                
+        for i, node in enumerate(self.nodes):
+            if("sender" in node.get_name()):
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python src/sender_emit.py {self.get_worker_ips()}'], quiet=True)
+                
+            if("receiver" in node.get_name()):
+                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh', f'python src/receiver_recv.py'], quiet=True)
+    
+    def stop_on_nodes(self):
+        for i, node in enumerate(self.nodes):
+            self.execute_commands(node, [f'kill -15 -1'], quiet=False)
             
-    def deploy(self, fablib_manager):
+    def deploy(self):
         print("Creating slice...")
-        self.create_slice(fablib_manager)
+        self.create_slice()
         print("Adding nodes and network components...")
-        self.add_nodes(fablib_manager)
+        self.add_nodes()
         print("Deploying slice...")
         self.slice.submit()
+
+    def run(self):
+        print("Waiting for slice to be active...")
+        self.slice.wait_ssh()
         print("Setting subnet IPs...")
         self.set_subnet_ips()
-        print("Slice deployed successfully.")
-
-
-
+        print("Uploading source files...")
+        self.upload_src_files_to_nodes()
+        print("Running ping test to validate connectivity...")
+        self.run_subnet_ping_test()
+        print("Executing workload on nodes...")
+        self.run_on_nodes()

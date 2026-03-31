@@ -2,6 +2,7 @@ from scapy.all import sniff, IP, UDP
 import json
 import random
 import socket
+import sys
 from schema import Schema
 from util.binn_helper import BinnHelper
 
@@ -47,3 +48,7 @@ class Worker:
     def start(self):
         print(f"Sniffing for messages on {self.interface}...")
         sniff(iface=self.interface, filter="udp port 5000", prn=self.packet_callback)
+
+if __name__ == "__main__":
+    worker = Worker(receiver_ip=sys.argv[1] if len(sys.argv) > 1 else sys.exit("Usage: python worker_consume.py <receiver_ip>"))
+    worker.start()

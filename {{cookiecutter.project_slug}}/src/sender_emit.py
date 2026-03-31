@@ -1,9 +1,10 @@
+import sys
+
 from scapy.all import IP, UDP, Send, Raw
 import json
 
 class Sender:
     def __init__(self, worker_ips):
-        #TODO Need to get the IPs after the slice is created!
         self.worker_ips = worker_ips
         self.port = 5000
 
@@ -24,3 +25,8 @@ class Sender:
             
             print(f" Sending packet to {ip}...")
             send(pkt, verbose=False)
+            
+if __name__ == "__main__":
+    worker_ips = sys.argv[1].replace(" ", "").replace("[", "").replace("]", "").replace("'","").split(",") if len(sys.argv) > 1 else sys.exit("Usage: python sender_emit.py <worker_ips_comma_separated>")
+    sender = Sender(worker_ips=worker_ips)
+    sender.emit()
