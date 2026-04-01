@@ -76,6 +76,8 @@ This is a work-in-progress project. Current issues:
 - Overall code quality needs improvement
 - slice_manager.py needs to be much more generic
 
+Right now, places where code would be abstracted for framework purposes are holding a test 'Monte Carlo' pi approximation. This will be changed in the future (likely moved to an 'examples' area), but is left there for now for demo purposes.
+
 Planned improvements:
 - Automated template handling
 - More topology templates
