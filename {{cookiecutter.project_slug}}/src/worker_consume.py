@@ -39,7 +39,7 @@ class Worker:
         if pkt.haslayer(Raw):
             try:
                 payload = self.decode_packet(pkt)
-                if not payload: return # Guard against empty/junk packets
+                if not payload: return
                 
                 result = self.compute(payload)
                 binary_payload = BinnHelper.pack(result)

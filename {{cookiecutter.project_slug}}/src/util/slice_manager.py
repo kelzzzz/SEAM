@@ -173,11 +173,10 @@ class SliceManager:
         for i, node in enumerate(self.nodes):
             if("receiver" in node.get_name()):
                 node.download_file(remote_file_path=f"/home/{node.get_username()}/sink.csv", local_file_path=local_path)
-                print(f"Sink file downloaded to {local_path}")
+                #print(f"Sink file downloaded to {local_path}")
                 return
     
     def bootstrap_nodes(self):
-        #TODO The bootstrap process is really slow and should be executed on threads soon
         for i, node in enumerate(self.nodes):
             if("worker" in node.get_name()):
                 self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
