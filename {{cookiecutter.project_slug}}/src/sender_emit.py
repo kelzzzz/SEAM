@@ -1,7 +1,8 @@
 import sys
-
 from scapy.all import IP, UDP, send, Raw
 import json
+import random
+import time
 
 class Sender:
     def __init__(self, worker_ips):
@@ -13,7 +14,7 @@ class Sender:
         data = {
             "task_id": worker_id,
             "samples": 10**5,
-            "seed": worker_id * 123
+            "seed": worker_id * random.randint(1, 1000)
         }
         return json.dumps(data)
 
@@ -35,4 +36,7 @@ if __name__ == "__main__":
         sys.exit("Usage: python3 sender_emit.py <worker_ips>")
         
     sender = Sender(worker_ips=worker_ips)
-    sender.emit()
+    
+    while(True):
+        time.sleep(1)
+        sender.emit()

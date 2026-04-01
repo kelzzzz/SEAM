@@ -1,3 +1,5 @@
+from platform import node
+
 from fabrictestbed_extensions.fablib.fablib import FablibManager as fablib_manager
 import yaml
 from pathlib import Path
@@ -145,7 +147,18 @@ class SliceManager:
                 self.execute_single_node(n, commands, quiet=quiet)
         else:
             self.execute_single_node(node, commands, quiet)
+            
+    def execute_single_node_on_thread(self,node, commands):
+        allcommands = ';'.join(commands)
+        node.execute_thread(allcommands, output_file=node.get_name() + '_thread.log')
 
+    def execute_commands_on_threads(self, node, commands):
+        if isinstance(node, list):
+            for n in node:
+                self.execute_single_node_on_thread(n, commands)
+        else:
+            self.execute_single_node_on_thread(node, commands)
+            
     def upload_src_files_to_nodes(self):
         self._ensure_slice_and_nodes()
         print(str(SRC_DIR))
@@ -154,19 +167,27 @@ class SliceManager:
             node.upload_directory(local_directory_path=str(SRC_DIR), remote_directory_path=f"/home/{node.get_username()}")
             node.upload_file(local_file_path=str(BOOTSTRAP_PATH), remote_file_path=f"/home/{node.get_username()}/bootstrap.sh")
         print("Files uploaded.")
-        
+    
+    def download_sink_from_receiver(self, local_path="sink.csv"):
+        self._ensure_slice_and_nodes()
+        for i, node in enumerate(self.nodes):
+            if("receiver" in node.get_name()):
+                node.download_file(remote_file_path=f"/home/{node.get_username()}/sink.csv", local_file_path=local_path)
+                print(f"Sink file downloaded to {local_path}")
+                return
+    
     def bootstrap_nodes(self):
         #TODO The bootstrap process is really slow and should be executed on threads soon
         for i, node in enumerate(self.nodes):
             if("worker" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
+                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
                 
         for i, node in enumerate(self.nodes):
             if("sender" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
+                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
                 
             if("receiver" in node.get_name()):
-                self.execute_commands(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
+                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
     
     def run_send_work_recv_code(self):
         recv_ip = self.get_ips()['recv']
