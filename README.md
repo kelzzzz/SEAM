@@ -86,6 +86,7 @@ Planned improvements:
 - Node heartbeats
 - Support for additional data sinks
 - Auto-initialize Git repositories for projects
+- Support for running C source code/better optimiziations (without Python overhead)
 
 ## AI Usage & Transparency Notice
 
