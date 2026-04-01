@@ -179,14 +179,14 @@ class SliceManager:
     def bootstrap_nodes(self):
         for i, node in enumerate(self.nodes):
             if("worker" in node.get_name()):
-                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
+                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'])
                 
         for i, node in enumerate(self.nodes):
             if("sender" in node.get_name()):
-                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
+                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'])
                 
             if("receiver" in node.get_name()):
-                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'], quiet=True)
+                self.execute_commands_on_threads(node, [f'chmod +x bootstrap.sh', f'./bootstrap.sh'])
     
     def run_send_work_recv_code(self):
         recv_ip = self.get_ips()['recv']
@@ -213,6 +213,7 @@ class SliceManager:
             self.fablib.get_slice(name=self.slice_name)
             print(f"Slice {self.slice_name} already exists. Using existing slice.")
             self.slice = self.fablib.get_slice(name=self.slice_name)
+            self.nodes = self.collect_nodes()
             return
         except Exception as e:
             self.slice = self.fablib.new_slice(name=self.slice_name)
