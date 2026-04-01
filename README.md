@@ -85,6 +85,7 @@ Planned improvements:
 - Enhanced monitoring
 - Node heartbeats
 - Support for additional data sinks
+- Auto-initialize Git repositories for projects
 
 ## AI Usage & Transparency Notice
 
