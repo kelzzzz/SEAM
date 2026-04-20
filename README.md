@@ -24,13 +24,7 @@ Fill out the cookiecutter prompts:
 - **topology_template**: Choose from available templates (swr_basic, L3VPN)
 - **jupyter_kernel_name**: Python kernel for notebooks (usually python3)
 
-### 3. Move Template Folder
-
-**Important**: After cookiecutter generates the project, the selected topology template folder is now moved automatically into the project root and the other templates are removed. You no longer need to perform this step manually.
-
-If you want to inspect the generated project, the chosen template will be available under `./{{cookiecutter.topology_template}}/` in the project root.
-
-### 4. Implement Your Logic
+### 3. Implement Your Logic
 
 Edit the following files in the `src/` directory with your experiment code:
 
@@ -39,7 +33,7 @@ Edit the following files in the `src/` directory with your experiment code:
 - **`worker_consume.py`**: Implement the `compute()` method to process received data - this should output your schema
 - **`receiver_recv.py`**: Right now this prints to a CSV based on the schema, but will soon have different options for sinks.
 
-### 5. Deploy and Run
+### 4. Deploy and Run
 
 Open `deploy.ipynb` in Jupyter and run the cells to:
 - Install dependencies
@@ -81,8 +75,6 @@ Planned improvements:
 - Enhanced monitoring
 - Node heartbeats
 - Support for additional data sinks
-- Auto-initialize Git repositories for projects
-- Support for running C source code/better optimiziations (without Python overhead)
 
 ## AI Usage & Transparency Notice
 
