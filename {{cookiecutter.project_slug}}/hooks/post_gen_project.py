@@ -4,11 +4,16 @@ from pathlib import Path
 
 # This file is executed by Cookiecutter after the project is generated.
 # It moves the selected topology template folder to the project root and removes
-# any other unused template folders.
+# any other unused template folders. It also cleans up slice managers to keep only
+# the abstract manager and the one matching the selected template.
 
 selected_template = "{{ cookiecutter.topology_template }}"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = PROJECT_ROOT / "templates"
+MANAGERS_DIR = PROJECT_ROOT / "src" / "util" / "managers"
+
+# mapping from template to manager file (without .py extension)
+TEMPLATE_TO_MANAGER = "{{ cookiecutter.topology_template }}"+"_slice_manager"
 
 def _resolve_template_dir(choice):
     choice_name = choice
@@ -38,6 +43,21 @@ def _remove_other_templates(keep_name):
         pass
 
 
+def _cleanup_managers(keep_manager):
+    if not MANAGERS_DIR.exists():
+        return
+
+    for candidate in MANAGERS_DIR.iterdir():
+        if candidate.is_file() and candidate.suffix == '.py':
+            if candidate.stem == 'abstract_slice_manager':
+                continue  # always keep
+            if candidate.stem == keep_manager:
+                continue  # keep the matching one
+            # remove others
+            candidate.unlink()
+            print(f"Removed unused manager: {candidate.name}")
+
+
 def main():
     selected_dir = _resolve_template_dir(selected_template)
     
@@ -58,6 +78,15 @@ def main():
     _remove_other_templates(selected_template)
     print(f"Selected template '{selected_template}' and removed other template folders.")
 
+    # clean up managers
+    keep_manager = TEMPLATE_TO_MANAGER
+    if keep_manager:
+        _cleanup_managers(keep_manager)
+        print(f"Kept abstract_slice_manager.py and {keep_manager}.py")
+    else:
+        print(f"No specific manager found for template '{selected_template}'; keeping only abstract_slice_manager.py")
+
 
 if __name__ == '__main__':
     main()
+
