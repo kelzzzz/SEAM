@@ -87,6 +87,6 @@ def main():
         print(f"No specific manager found for template '{selected_template}'; keeping only abstract_slice_manager.py")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
