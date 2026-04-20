@@ -26,13 +26,9 @@ Fill out the cookiecutter prompts:
 
 ### 3. Move Template Folder
 
-**Important**: After cookiecutter generates the project, you need to manually move the chosen template folder from `templates/{{cookiecutter.topology_template}}/` to the project root. This step will be automated in the future.
+**Important**: After cookiecutter generates the project, the selected topology template folder is now moved automatically into the project root and the other templates are removed. You no longer need to perform this step manually.
 
-For example, if you selected `swr_basic`:
-```bash
-mv templates/swr_basic/* ./
-rmdir templates/swr_basic
-```
+If you want to inspect the generated project, the chosen template will be available under `./{{cookiecutter.topology_template}}/` in the project root.
 
 ### 4. Implement Your Logic
 
