@@ -8,9 +8,8 @@ from pathlib import Path
 # the abstract manager and the one matching the selected template.
 
 selected_template = "{{ cookiecutter.topology_template }}"
-PROJECT_ROOT = {{cookiecutter.project_slug}}
-TEMPLATES_DIR = PROJECT_ROOT / "templates"
-MANAGERS_DIR = PROJECT_ROOT / "src" / "util" / "managers"
+TEMPLATES_DIR = "templates"
+MANAGERS_DIR = "src" / "util" / "managers"
 
 # mapping from template to manager file (without .py extension)
 TEMPLATE_TO_MANAGER = "{{ cookiecutter.topology_template }}"+"_slice_manager"
