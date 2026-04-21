@@ -5,7 +5,7 @@ from fabrictestbed_extensions.fablib.fablib import FablibManager as fablib_manag
 import yaml
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 SRC_DIR = Path(__file__).resolve().parent.parent
 CONFIG_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "config" / "topology.yaml"
 BOOTSTRAP_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "bootstrap" / "bootstrap.sh"
