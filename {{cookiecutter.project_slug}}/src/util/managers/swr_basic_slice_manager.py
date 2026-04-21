@@ -1,8 +1,8 @@
-from .abstract_slice_manager import AbstractSliceManager
+from .abstract_slice_manager import abstract_slice_manager
 import ipaddress
 import pandas as pd
 
-class swr_basic_slice_manager(AbstractSliceManager):
+class swr_basic_slice_manager(abstract_slice_manager):
     def set_yaml_variables(self):
         self.slice_name = self.topology_cfg['slice_name']
         self.component_prefix = "my_seam_network_test"
