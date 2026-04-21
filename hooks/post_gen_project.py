@@ -64,13 +64,13 @@ def main():
         print(f"(!!) Could not find template folder for '{selected_template}' in {TEMPLATES_DIR}")
         return
 
-    target_dir = PROJECT_ROOT / selected_template
+    target_dir = Path(selected_template)
     
     if selected_dir.resolve() != target_dir.resolve():
         selected_dir.rename(target_dir)
     else:
         # move the selected directory out of templates to the project root
-        target_dir = PROJECT_ROOT / selected_dir.name
+        target_dir = Path(selected_dir.name)
         if not target_dir.exists():
             selected_dir.rename(target_dir)
 
