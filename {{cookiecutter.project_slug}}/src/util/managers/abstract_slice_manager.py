@@ -27,6 +27,9 @@ class abstract_slice_manager:
         
         if(not self.validate_image()):
             raise Exception(f"Invalid image selection. Please select a valid image in the topology.yaml file.")
+        
+        if(not self.validate_components()):
+            raise Exception(f"Invalid component selection. Please select valid components in the topology.yaml file.")
     
     @abstractmethod
     def validate_sites(self):
@@ -34,6 +37,10 @@ class abstract_slice_manager:
     
     @abstractmethod
     def validate_image(self):
+        pass
+    
+    @abstractmethod
+    def validate_components(self):
         pass
     
     @abstractmethod
@@ -74,6 +81,13 @@ class abstract_slice_manager:
         except Exception as e:
             return False
     
+    def component_exists_on_FABRIC(self, component):
+        try:
+            if component in self.fablib.component.Component.list_interfaces():
+                return True
+        except Exception as e:
+            return False
+        
     def collect_nodes(self):
         if(not self.slice):
             self.deploy()

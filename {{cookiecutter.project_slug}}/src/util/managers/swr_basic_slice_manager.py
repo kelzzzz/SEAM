@@ -18,6 +18,9 @@ class swr_basic_slice_manager(abstract_slice_manager):
     def validate_image(self):
         return self.image_exists_on_FABRIC(self.topology_cfg['image'])
     
+    def validate_components(self):
+        return self.component_exists_on_FABRIC(self.topology_cfg['network'][0]['NIC_model'])
+    
     def add_nodes_and_interfaces(self):
         net = self.slice.add_l2network(
             name=f"l2net_{self.component_prefix}",
