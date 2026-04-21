@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+import subprocess
 
 # This file is executed by Cookiecutter after the project is generated.
 # It moves the selected topology template folder to the project root and removes
@@ -56,8 +57,18 @@ def _cleanup_managers(keep_manager):
             candidate.unlink()
             print(f"Removed unused manager: {candidate.name}")
 
+def initialize_git_repo():
+    if not (Path(".") / ".git").exists():
+        subprocess.run(["git", "init"], check=True)
+        print("Initialized new git repository.")
+    else:
+        print("Git repository already initialized.")
 
 def main():
+    
+    print("initializing git repository...")
+    initialize_git_repo()
+    
     selected_dir = _resolve_template_dir(selected_template)
     
     if selected_dir is None:

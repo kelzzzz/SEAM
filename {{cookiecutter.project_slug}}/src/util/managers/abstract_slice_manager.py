@@ -6,7 +6,7 @@ import yaml
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-SRC_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = Path(__file__).resolve().parent.parent.parent
 CONFIG_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "config" / "topology.yaml"
 BOOTSTRAP_PATH = BASE_DIR / "{{ cookiecutter.topology_template }}" / "bootstrap" / "bootstrap.sh"
 
@@ -166,7 +166,7 @@ class abstract_slice_manager:
         self.upload_src_files_to_nodes()
         print("Configuring network...")
         self.setup_network()
-        print("Executing workload on nodes...")
+        print("Executing bootstrap on nodes, check log files are complete before running experiments...")
         self.bootstrap_nodes()
         
     def run(self):

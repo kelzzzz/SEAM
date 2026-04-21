@@ -5,7 +5,7 @@ import pandas as pd
 class swr_basic_slice_manager(abstract_slice_manager):
     def set_yaml_variables(self):
         self.slice_name = self.topology_cfg['slice_name']
-        self.component_prefix = "my_seam_network_test"
+        self.component_prefix = "seam"
         self.subnet_prefix = self.topology_cfg['network'][0]['subnet'].split('/')[0][:-1]
         self.subnet = self.topology_cfg['network'][0]['subnet']
         
@@ -93,3 +93,36 @@ class swr_basic_slice_manager(abstract_slice_manager):
 
         except Exception as e:
             print(f"Error during ping test {e}")
+            
+    def get_ips(self):
+        self._ensure_slice_and_nodes()
+        ip_dict = {}
+        for i, node in enumerate(self.nodes):
+            ip = self.subnet_prefix + str(i+1)
+            node_name = node.get_name()
+            if "receiver" in node_name:
+                ip_dict['recv'] = ip
+            elif "sender" in node_name:
+                ip_dict['sndr'] = ip
+            elif "worker" in node_name:
+                ip_dict[f'w{i}'] = ip
+        return ip_dict
+
+    def get_worker_ips(self):
+        self._ensure_slice_and_nodes()
+            
+        ips = []
+        for i, node in enumerate(self.nodes):
+            ip = self.subnet_prefix + str(i+1)
+            if("worker" in node.get_name()):
+                ips.append(ip)
+        return ips
+    
+
+    def get_all_ips_list(self):
+        self._ensure_slice_and_nodes()
+            
+        ips = []
+        for i, node in enumerate(self.nodes):
+            ips.append(self.subnet_prefix + str(i+1))
+        return ips
